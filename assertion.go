@@ -33,7 +33,7 @@ func ParseAssertionOptions(str string) (assertionOptions *AssertionOptions, err 
 	if len(values.Challenge) == 0 {
 		return nil, errors.New("failed to find challenge in options")
 	}
-	challenge, err := base64.RawURLEncoding.DecodeString(values.Challenge)
+	challenge, err := base64.RawURLEncoding.DecodeString(values.Challenge.String())
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func ParseAssertionOptions(str string) (assertionOptions *AssertionOptions, err 
 		if len(cred.ID) == 0 {
 			return nil, errors.New("allowed credential has an empty id")
 		}
-		assertionOptions.AllowCredentials = append(assertionOptions.AllowCredentials, cred.ID)
+		assertionOptions.AllowCredentials = append(assertionOptions.AllowCredentials, cred.ID.String())
 	}
 
 	return assertionOptions, nil
@@ -118,15 +118,15 @@ func CreateAssertionResponse(rp RelyingParty, auth Authenticator, cred Credentia
 /// Helpers
 
 type assertionOptionsValues struct {
-	Challenge        string                            `json:"challenge,omitempty"`
+	Challenge        FlexibleBase64                    `json:"challenge,omitempty"`
 	AllowCredentials []assertionOptionsAllowCredential `json:"allowCredentials,omitempty"`
 	RelyingPartyID   string                            `json:"rpId,omitempty"`
 	PublicKey        *assertionOptionsValues           `json:"publicKey,omitempty"`
 }
 
 type assertionOptionsAllowCredential struct {
-	Type string `json:"type"`
-	ID   string `json:"id"`
+	Type string         `json:"type"`
+	ID   FlexibleBase64 `json:"id"`
 }
 
 type assertionResponse struct {

@@ -35,7 +35,7 @@ func ParseAttestationOptions(str string) (attestationOptions *AttestationOptions
 		RelyingPartyName: values.RP.Name,
 	}
 
-	decodedUserID, err := base64.RawURLEncoding.DecodeString(values.User.ID)
+	decodedUserID, err := base64.RawURLEncoding.DecodeString(values.User.ID.String())
 	if err != nil {
 		return nil, errors.New("failed to decode user id in response")
 	}
@@ -47,7 +47,7 @@ func ParseAttestationOptions(str string) (attestationOptions *AttestationOptions
 	if len(values.Challenge) == 0 {
 		return nil, errors.New("failed to find challenge in response")
 	}
-	challenge, err := base64.RawURLEncoding.DecodeString(values.Challenge)
+	challenge, err := base64.RawURLEncoding.DecodeString(values.Challenge.String())
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func ParseAttestationOptions(str string) (attestationOptions *AttestationOptions
 		if len(cred.ID) == 0 {
 			return nil, errors.New("allowed credential has an empty id")
 		}
-		attestationOptions.ExcludeCredentials = append(attestationOptions.ExcludeCredentials, cred.ID)
+		attestationOptions.ExcludeCredentials = append(attestationOptions.ExcludeCredentials, cred.ID.String())
 	}
 
 	return attestationOptions, nil
@@ -156,7 +156,7 @@ func CreateAttestationResponse(rp RelyingParty, auth Authenticator, cred Credent
 /// Helpers
 
 type attestationOptionsValues struct {
-	Challenge          string                                `json:"challenge,omitempty"`
+	Challenge          FlexibleBase64                        `json:"challenge,omitempty"`
 	ExcludeCredentials []attestationOptionsExcludeCredential `json:"excludeCredentials,omitempty"`
 	RP                 attestationOptionsRelyingParty        `json:"rp,omitempty"`
 	User               attestationOptionsUser                `json:"user,omitempty"`
@@ -169,14 +169,14 @@ type attestationOptionsRelyingParty struct {
 }
 
 type attestationOptionsUser struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
+	ID          FlexibleBase64 `json:"id"`
+	Name        string         `json:"name"`
+	DisplayName string         `json:"displayName"`
 }
 
 type attestationOptionsExcludeCredential struct {
-	Type string `json:"type"`
-	ID   string `json:"id"`
+	Type string         `json:"type"`
+	ID   FlexibleBase64 `json:"id"`
 }
 
 type attestationStatement struct {
