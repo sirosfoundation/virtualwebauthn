@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"math/big"
 )
 
 const (
@@ -43,15 +44,29 @@ func importEC2SigningKey(keyData []byte) *ec2SigningKey {
 }
 
 func newEC2SigningKeyWithPrivateKey(privateKey *ecdsa.PrivateKey) *ec2SigningKey {
+	byteLen := (privateKey.Curve.Params().BitSize + 7) / 8
 	info := ec2KeyInfo{
 		Type:      ec2Type,
 		Algorithm: ec2SHA256Algo,
 		Curve:     ec2P256Curve,
-		X:         privateKey.X.Bytes(),
-		Y:         privateKey.Y.Bytes(),
+		X:         padBigInt(privateKey.X, byteLen),
+		Y:         padBigInt(privateKey.Y, byteLen),
 	}
 	attestationData := marshalCbor(info)
 	return &ec2SigningKey{privateKey: privateKey, attestationData: attestationData}
+}
+
+// padBigInt returns the big-endian byte representation of n, left-padded
+// with zeros to exactly size bytes. big.Int.Bytes() strips leading zeros
+// which breaks COSE EC2 keys that require fixed-length coordinates.
+func padBigInt(n *big.Int, size int) []byte {
+	b := n.Bytes()
+	if len(b) >= size {
+		return b
+	}
+	padded := make([]byte, size)
+	copy(padded[size-len(b):], b)
+	return padded
 }
 
 func (k *ec2SigningKey) AttestationData() []byte {
